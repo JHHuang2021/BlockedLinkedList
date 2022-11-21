@@ -1,0 +1,12 @@
+.vscode
+CMakeFiles
+.clang-format
+bash.bat
+cmake_install.cmake
+CMakeCache.txt
+code
+Makefile
+test.dm
+test.in
+test.out
+test.sc
