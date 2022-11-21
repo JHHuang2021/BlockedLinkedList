@@ -10,8 +10,8 @@ struct String {
 int value;
 BlockedLinkList<String, int, INT_MIN> bll("test");
 int main() {
-  freopen("test.in", "r", stdin);
-  freopen("test.out", "w", stdout);
+//   freopen("test.in", "r", stdin);
+//   freopen("test.out", "w", stdout);
   int n;
   std::cin >> n;
   for (int i = 0; i < n; i++) {
