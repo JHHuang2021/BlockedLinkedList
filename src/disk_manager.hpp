@@ -9,17 +9,17 @@ class DiskManager {
   std::fstream file_;
 
  public:
-  DiskManager(std::string file_name_, std::initializer_list<Initializer> initializer_) : file_name_(file_name_) {
+  DiskManager(std::string file_name_, int &value1_, const int &addr1_, int &value2_, const int &addr2_)
+      : file_name_(file_name_) {
     std::ifstream in(file_name_, std::ifstream::in);
     if (!in) {
       std::ofstream out(file_name_, std::ofstream::out);
-      file_.open(file_name_, std::fstream::in | std::fstream::out | std::fstream::binary);
-      for (Initializer i : initializer_) Write(&i.value_, i.addr_);
-      file_.close();
+      out.close();
+      Write(&value1_, addr1_);
+      Write(&value2_, addr2_);
     } else {
-      file_.open(file_name_, std::fstream::in | std::fstream::out | std::fstream::binary);
-      for (Initializer i : initializer_) Read(&i.value_, i.addr_);
-      file_.close();
+      Read(&value1_, addr1_);
+      Read(&value2_, addr2_);
     }
   }
 
@@ -34,7 +34,7 @@ class DiskManager {
   template <class T>
   void Read(T *data_, int addr_) {
     file_.open(file_name_, std::fstream::in | std::fstream::out | std::fstream::binary);
-    file_.seekp(addr_, std::ios::beg);
+    file_.seekg(addr_, std::ios::beg);
     file_.read(reinterpret_cast<char *>(data_), sizeof(T));
     file_.close();
   }
