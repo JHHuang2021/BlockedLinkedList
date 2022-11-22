@@ -29,7 +29,9 @@ class BufferPool {
     }
   }
 
-  void Put(int ind_, T* val_) { buffer_.insert({ind_, val_}); }
+  void Put(int ind_, T* val_) { 
+    buffer_.insert({ind_, val_}); 
+  }
 
   bool Put(T*& ret_) {
     if (avail_.empty()) {

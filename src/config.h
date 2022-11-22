@@ -10,4 +10,8 @@ const int BLOCK_SIZE = 1010;
 const int BLOCK_SPLIT_THRESHOLD = 900;
 const int BLOCK_SPLIT_LEFT = 450;
 const int BLOCK_MERGE_THRESHOLD = 100;
+// const int BLOCK_SIZE = 11;
+// const int BLOCK_SPLIT_THRESHOLD = 9;
+// const int BLOCK_SPLIT_LEFT = 4;
+// const int BLOCK_MERGE_THRESHOLD = 1;
 #endif

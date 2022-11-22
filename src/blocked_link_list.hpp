@@ -2,6 +2,7 @@
 #define BLOCKED_LINK_LIST_HPP
 
 #include <algorithm>
+#include <cstring>
 #include <string>
 #include <vector>
 
@@ -50,6 +51,7 @@ class BlockedLinkList {
       pre_ = -1;
       ind_ = -1;
       num_ = 0;
+      std::memset(array_, 0, sizeof(array_));
     }
   };
 
@@ -59,6 +61,27 @@ class BlockedLinkList {
   SpaceCollector *space_collector_ = nullptr;
   BufferPool<Block> *buffer_pool_ = nullptr;
   int block_num_ = 0, first_index_ = 0;
+
+  Block *GetNewBlock(int ind_ = -1) {
+    Block *block;
+    if (!buffer_pool_->Put(block)) disk_manager_->Write(block, block->ind_ * SIZE_BLOCK + 2 * SIZE_INT);
+    block->Init();
+    if (ind_ != -1) {
+      block->ind_ = ind_;
+      buffer_pool_->Put(ind_, block);
+    } else
+      throw "error";
+    return block;
+  }
+
+  Block *GetIndexBlock(int ind_) {
+    Block *block;
+    if (!buffer_pool_->Get(ind_, block)) {
+      block = GetNewBlock(ind_);
+      disk_manager_->Read(block, ind_ * SIZE_BLOCK + 2 * SIZE_INT);
+    }
+    return block;
+  }
 
  public:
   BlockedLinkList(const std::string file_name_) {
@@ -114,6 +137,7 @@ class BlockedLinkList {
 
     if (block->num_ < BLOCK_MERGE_THRESHOLD) Merge(*block);
   }
+
   std::vector<Value> Find(const Key &key_) {
     std::vector<Value> ret;
     Node node(key_, least);
@@ -128,8 +152,10 @@ class BlockedLinkList {
         ret.push_back(tmp->value_);
       tmp++;
       if (tmp - block->array_ == block->num_) {
-        if (block->nxt_ == -1) return ret;
-        disk_manager_->Read(block, block->nxt_ * SIZE_BLOCK + 2 * SIZE_INT);
+        int ind = block->nxt_;
+        if (ind == -1) return ret;
+        block = GetNewBlock(ind);
+        disk_manager_->Read(block, ind * SIZE_BLOCK + 2 * SIZE_INT);
         tmp = block->array_;
       }
     }
@@ -138,10 +164,8 @@ class BlockedLinkList {
  private:
   void Split(Block &block_) {
     if (block_.num_ <= BLOCK_SPLIT_THRESHOLD) return;
-    Block *new_block;
-    if (!buffer_pool_->Put(new_block)) disk_manager_->Write(new_block, new_block->ind_ * SIZE_BLOCK + 2 * SIZE_INT);
-    new_block->Init();
-    new_block->ind_ = space_collector_->GetBlank();
+    Block *new_block, *nxt_block;
+    new_block = GetNewBlock(space_collector_->GetBlank());
 
     new_block->pre_ = block_.ind_;
     new_block->nxt_ = block_.nxt_;
@@ -151,21 +175,33 @@ class BlockedLinkList {
     for (int i = block_.num_ / 2; i < block_.num_; i++) new_block->array_[i - block_.num_ / 2] = block_.array_[i];
     block_.num_ /= 2;
     block_num_++;
+
+    int pre_block_ind = new_block->ind_;
+    if (block_.nxt_ != -1) {
+      nxt_block = GetIndexBlock(block_.nxt_);
+      nxt_block->pre_ = pre_block_ind;
+    }
   }
   void Merge(Block &block_) {
     if (block_.num_ >= BLOCK_MERGE_THRESHOLD) return;
-    Block *sibling_block;
+    Block *sibling_block, *another_block = nullptr;
     int ind = -1;
-    if (block_.pre_ != -1) {
-      disk_manager_->Read(sibling_block, block_.pre_ * SIZE_BLOCK + 2 * SIZE_INT);
-      for (int i = 0; i < block_.num_; i++) sibling_block->array_[i + sibling_block->num_] = block_.array_[i];
-      space_collector_->PutBlank(block_.ind_);
+    int nxt_block_ind = block_.nxt_, pre_block_ind = block_.pre_;
+    if (pre_block_ind != -1) {
+      sibling_block = GetIndexBlock(pre_block_ind);
       ind = block_.ind_;
+      sibling_block->nxt_ = nxt_block_ind;
+      for (int i = 0; i < block_.num_; i++) sibling_block->array_[i + sibling_block->num_] = block_.array_[i];
+
+      if (nxt_block_ind != -1) {
+        another_block = GetIndexBlock(nxt_block_ind);
+        another_block->pre_ = pre_block_ind;
+      }
+
+      space_collector_->PutBlank(ind);
     } else if (block_.nxt_ != -1) {
-      disk_manager_->Read(sibling_block, block_.nxt_ * SIZE_BLOCK + 2 * SIZE_INT);
-      for (int i = 0; i < sibling_block->num_; i++) block_.array_[i + block_.num_] = sibling_block->array_[i];
-      space_collector_->PutBlank(sibling_block->ind_);
-      ind = sibling_block->ind_;
+      sibling_block = GetIndexBlock(nxt_block_ind);
+      Merge(*sibling_block);
     }
     if (ind != -1) {
       buffer_pool_->Delete(ind);
@@ -178,14 +214,10 @@ class BlockedLinkList {
 
     int ind = first_index_;
     for (; ind != -1;) {
-      if (!buffer_pool_->Get(ind, block)) {
-        if (!buffer_pool_->Put(block)) disk_manager_->Write(block, block->ind_ * SIZE_BLOCK + 2 * SIZE_INT);
-        disk_manager_->Read(block, ind * SIZE_BLOCK + 2 * SIZE_INT);
-        buffer_pool_->Put(ind, block);
-      }
+      block = GetIndexBlock(ind);
       ind = block->nxt_;
 
-      if (block->num_ > 0 && block->array_[0] <= node && node <= block->array_[block->num_ - 1]) break;
+      if (block->num_ > 0 && node <= block->array_[block->num_ - 1]) break;
       if (ind == -1) break;
     }
     auto binary_find = std::lower_bound(block->array_, block->array_ + block->num_, node);

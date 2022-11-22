@@ -21,7 +21,7 @@ int main() {
       std::cin >> str.ch >> value;
     else
       std::cin >> str.ch;
-    {
+    try {
       if (op == "insert")
         bll.Insert(str, value);
       else if (op == "delete")
@@ -34,6 +34,8 @@ int main() {
         } else
           std::cout << "null" << std::endl;
       }
+    } catch (...) {
+      // std::cout << "null" << std::endl;
     }
   }
 
