@@ -154,8 +154,7 @@ class BlockedLinkList {
       if (tmp - block->array_ == block->num_) {
         int ind = block->nxt_;
         if (ind == -1) return ret;
-        block = GetNewBlock(ind);
-        disk_manager_->Read(block, ind * SIZE_BLOCK + 2 * SIZE_INT);
+        block = GetIndexBlock(ind);
         tmp = block->array_;
       }
     }
@@ -169,7 +168,6 @@ class BlockedLinkList {
 
     new_block->pre_ = block_.ind_;
     new_block->nxt_ = block_.nxt_;
-    block_.nxt_ = new_block->ind_;
     new_block->num_ = block_.num_ - block_.num_ / 2;
 
     for (int i = block_.num_ / 2; i < block_.num_; i++) new_block->array_[i - block_.num_ / 2] = block_.array_[i];
@@ -181,6 +179,8 @@ class BlockedLinkList {
       nxt_block = GetIndexBlock(block_.nxt_);
       nxt_block->pre_ = pre_block_ind;
     }
+    block_.nxt_ = new_block->ind_;
+
   }
   void Merge(Block &block_) {
     if (block_.num_ >= BLOCK_MERGE_THRESHOLD) return;

@@ -10,9 +10,10 @@ struct String {
 int value;
 BlockedLinkList<String, int, INT_MIN> bll("test");
 int main() {
-  // freopen("test.in", "r", stdin);
-  // freopen("test.out", "w", stdout);
+  freopen("test.in", "r", stdin);
+  freopen("test.out", "w", stdout);
   int n;
+  int cnt = 0;
   std::cin >> n;
   for (int i = 0; i < n; i++) {
     std::string op;
@@ -27,6 +28,7 @@ int main() {
       else if (op == "delete")
         bll.Delete(str, value);
       else if (op == "find") {
+        cnt++;
         std::vector<int> ret = bll.Find(str);
         if (!ret.empty()) {
           for (int i : ret) std::cout << i << " ";
