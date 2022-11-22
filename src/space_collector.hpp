@@ -6,7 +6,6 @@
 
 #include "config.h"
 #include "disk_manager.hpp"
-#include "initializer.h"
 class SpaceCollector {
   DiskManager *disk_manager_ = nullptr;
   int valid_block_ = 0;

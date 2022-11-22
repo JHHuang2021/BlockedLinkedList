@@ -3,7 +3,6 @@
 #include <fstream>
 #include <iostream>
 
-#include "initializer.h"
 class DiskManager {
   std::string file_name_;
   std::fstream file_;

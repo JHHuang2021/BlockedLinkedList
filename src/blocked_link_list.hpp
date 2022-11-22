@@ -9,7 +9,6 @@
 #include "buffer_pool.hpp"
 #include "config.h"
 #include "disk_manager.hpp"
-#include "initializer.h"
 #include "space_collector.hpp"
 
 template <class Key, class Value, Value least>
