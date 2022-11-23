@@ -182,7 +182,7 @@ class BlockedLinkList {
   }
   void Merge(Block &block_) {
     if (block_.num_ >= BLOCK_MERGE_THRESHOLD) return;
-    Block *sibling_block, *another_block = nullptr;
+    Block *sibling_block = nullptr, *another_block = nullptr;
     int ind = -1;
     int nxt_block_ind = block_.nxt_, pre_block_ind = block_.pre_;
     if (pre_block_ind != -1) {
@@ -206,7 +206,7 @@ class BlockedLinkList {
       buffer_pool_->Delete(ind);
       block_num_--;
     }
-    if (sibling_block->num_ > BLOCK_SPLIT_THRESHOLD) Split(*sibling_block);
+    if (sibling_block && sibling_block->num_ > BLOCK_SPLIT_THRESHOLD) Split(*sibling_block);
   }
 
   std::pair<Block *, Node *> Find(const Node &node) {
